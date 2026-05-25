@@ -19,31 +19,33 @@
         header { background: linear-gradient(135deg, #4f46e5, #3730a3); color: white; padding: 140px 20px 80px 20px; text-align: center; box-shadow: 0 4px 20px rgba(79,70,229,0.15); }
         h1 { font-size: 3rem; font-weight: 700; margin-bottom: 15px; letter-spacing: -0.5px; }
         p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 30px; font-weight: 300; }
+        
+        /* 🕒 SATURDAY SALE TIMER WIDGET LAYOUT STYLING */
+        .auction-timer-widget { background: rgba(15, 23, 42, 0.4); max-width: 600px; margin: 0 auto 30px auto; padding: 15px 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15); display: flex; justify-content: space-between; align-items: center; text-align: left; backdrop-filter: blur(5px); }
+        .timer-info h4 { font-size: 0.85rem; text-transform: uppercase; color: #38bdf8; letter-spacing: 1px; margin-bottom: 2px; font-weight: 700; }
+        .timer-info div { font-size: 1.3rem; font-weight: 700; font-family: monospace; letter-spacing: 0.5px; color: #ffffff; }
+        .auction-entry-btn { background: #ef4444; color: white; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; transition: 0.2s; box-shadow: 0 4px 12px rgba(239,68,68,0.3); display: inline-block; }
+        .auction-entry-btn:hover { background: #dc2626; transform: translateY(-1px); }
+        .auction-entry-btn.waiting { background: #475569; color: #cbd5e1; box-shadow: none; }
+
         .search-container { background: white; max-width: 600px; margin: 0 auto; padding: 10px; border-radius: 50px; display: flex; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .search-container input { flex: 1; border: none; padding: 15px 25px; outline: none; font-size: 1rem; border-radius: 50px; }
+        .search-container input { flex: 1; border: none; padding: 15px 25px; outline: none; font-size: 1rem; border-radius: 50px; color: #1e293b; }
         .search-container button { background: #4f46e5; color: white; border: none; padding: 15px 35px; font-weight: 600; border-radius: 50px; cursor: pointer; transition: 0.2s ease; }
         .search-container button:hover { background: #4338ca; }
         main { max-width: 1000px; margin: 50px auto; padding: 0 20px; }
         .section-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 25px; border-left: 4px solid #4f46e5; padding-left: 10px; }
         .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-top: 20px; }
-        .shop-card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; transition: transform 0.2s; }
+        .shop-card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; text-align: left; transition: transform 0.2s; }
         .shop-card:hover { transform: translateY(-5px); }
         .shop-name { font-size: 1.25rem; font-weight: 600; color: #0f172a; margin-bottom: 5px; }
         .shop-category { display: inline-block; background: #e0e7ff; color: #4338ca; font-size: 0.75rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-bottom: 15px; text-transform: uppercase; }
         .shop-meta { font-size: 0.9rem; color: #64748b; margin-top: 8px; display: flex; align-items: center; gap: 5px; }
         .no-results { text-align: center; color: #64748b; font-size: 1.1rem; grid-column: 1/-1; padding: 4px 0; }
         
-        /* Fixed and Formatted Popup Modals styling layout */
+        /* Modal fallback styling */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 35px; border-radius: 20px; width: 100%; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; }
         .close-modal { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; border: none; background: none; }
-        .modal h3 { font-size: 1.4rem; margin-bottom: 20px; color: #0f172a; }
-        .form-group { margin-bottom: 18px; text-align: left; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
-        .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; font-size: 0.95rem; color: #0f172a; }
-        .form-group input:focus { border-color: #4f46e5; }
-        .submit-btn { width: 100%; background: #4f46e5; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 1rem; margin-top: 10px; transition: 0.2s; }
-        .submit-btn:hover { background: #4338ca; }
     </style>
 </head>
 <body>
@@ -57,8 +59,18 @@
     <header>
         <h1>Vocal to Local Marketplace</h1>
         <p>Empowering local small vendors and neighborhoods</p>
+        
+        <!-- 🕒 SATURDAY SALE DYNAMIC TIMER DISPLAY CONTAINER -->
+        <div class="auction-timer-widget">
+            <div class="timer-info">
+                <h4 id="timerLabel">⏳ Loading Auction Status...</h4>
+                <div id="countdownDisplay">00d 00h 00m 00s</div>
+            </div>
+            <a href="/saturday-sale" id="auctionLinkBtn" class="auction-entry-btn waiting">View Auction Arena</a>
+        </div>
+
         <div class="search-container">
-            <input type="text" id="pincodeInput" placeholder="Enter your Location Pincode (e.g., 411057)..." maxlength="10">
+            <input type="text" id="pincodeInput" placeholder="Enter your Location Pincode (e.g., 411057)..." maxlength="6">
             <button onclick="searchVendors()">Search Shops</button>
         </div>
     </header>
@@ -69,78 +81,72 @@
         </div>
     </main>
 
-    <!-- Buyer Enrollment Modal popup window container -->
-    <div id="buyerModal" class="modal">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeModal('buyerModal')">&times;</button>
-            <h3>Buyer Registration</h3>
-            <form id="buyerForm" onsubmit="submitForm(event, 'customer')">
-                <div class="form-group"><label>Full Name</label><input type="text" id="b_name" required placeholder="John Doe"></div>
-                <div class="form-group"><label>Email Address</label><input type="email" id="b_email" required placeholder="john@example.com"></div>
-                <div class="form-group"><label>Phone Number</label><input type="text" id="b_phone" required placeholder="9876543210"></div>
-                <button type="submit" class="submit-btn">Enroll as Buyer</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Seller Enrollment Modal popup window container -->
-    <div id="sellerModal" class="modal">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeModal('sellerModal')">&times;</button>
-            <h3>Seller Registration</h3>
-            <form id="sellerForm" onsubmit="submitForm(event, 'vendor')">
-                <div class="form-group"><label>Full Name</label><input type="text" id="s_name" required placeholder="Rajesh Kumar"></div>
-                <div class="form-group"><label>Email Address</label><input type="email" id="s_email" required placeholder="rajesh@example.com"></div>
-                <div class="form-group"><label>Phone Number</label><input type="text" id="s_phone" required placeholder="9876543210"></div>
-                <button type="submit" class="submit-btn">Enroll as Seller</button>
-            </form>
-        </div>
-    </div>
-
     <script>
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         
-        async function submitForm(event, role) {
-            event.preventDefault();
-            const prefix = role === 'customer' ? 'b_' : 's_';
-            const payload = {
-                full_name: document.getElementById(prefix + 'name').value,
-                email: document.getElementById(prefix + 'email').value,
-                phone_number: document.getElementById(prefix + 'phone').value,
-                role: role,
-                area_id: null
-            };
-            try {
-                const response = await fetch('/users/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    alert('Enrollment Successful! Account Created.');
-                    closeModal(role === 'customer' ? 'buyerModal' : 'sellerModal');
-                    document.getElementById(role === 'customer' ? 'buyerForm' : 'sellerForm').reset();
-                } else {
-                    alert('Error: ' + data.detail);
-                }
-            } catch (error) {
-                alert('Could not connect to registration server.');
-            }
-        }
-
+        // 🔍 Search Function: Queries your backend API by Pincode
         async function searchVendors() {
             const pincode = document.getElementById('pincodeInput').value.trim();
             const grid = document.getElementById('resultsGrid');
-            if (!pincode) { alert('Please type a valid pincode first!'); return; }
-            grid.innerHTML = '<div class="no-results">Searching database profiles...</div>';
+            
+            if (!pincode) {
+                alert('Please enter a valid pincode.');
+                return;
+            }
+            
+            grid.innerHTML = '<div class="no-results">Searching for local shops...</div>';
+            
             try {
-                const response = await fetch(`/search/?pincode=${pincode}`);
-                const data = await response.json();
+                const response = await fetch(`/search?pincode=${pincode}`);
+                const shops = await response.json();
+                
                 grid.innerHTML = '';
-                if (data.count === 0) {
-                    grid.innerHTML = '<div class="no-results">No registered local vendors found matching this pincode yet.</div>';
+                
+                if (!response.ok || shops.length === 0) {
+                    grid.innerHTML = '<div class="no-results">❌ No registered vendors found in this area yet.</div>';
                     return;
                 }
-                data.results.forEach(shop => {
+                
+                shops.forEach(shop => {
+                    const card = document.createElement('div');
+                    card.className = 'shop-card';
+                    card.innerHTML = `
+                        <div class="shop-name">${shop.business_name}</div>
+                        <span class="shop-category">${shop.category}</span>
+                        <div class="shop-meta">📍 ${shop.detailed_address}</div>
+                        ${shop.gst_number ? `<div class="shop-meta" style="font-size:0.85rem; color:#10b981; font-weight:600;">📄 GSTIN: \${shop.gst_number}</div>` : ''}
+                    `;
+                    grid.appendChild(card);
+                });
+                
+            } catch (error) {
+                grid.innerHTML = '<div class="no-results">⚠️ Error connecting to server. Please try again.</div>';
+            }
+        }
+
+        // 🕒 AUTOMATED REAL-TIME AUCTION TIMING TRACKER ENGINE SCRIPT
+        function runAuctionClock() {
+            const label = document.getElementById("timerLabel");
+            const display = document.getElementById("countdownDisplay");
+            const btn = document.getElementById("auctionLinkBtn");
+
+            function updateTime() {
+                const now = new Date();
+                const currentDay = now.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
+                const currentHour = now.getHours();
+
+                // Scenario A: The Live 1-Hour Auction window is actively running (Saturday 11 AM - 12 PM)
+                if (currentDay === 6 && currentHour >= 11 && currentHour < 12) {
+                    label.innerText = "🔴 LIVE FLASH AUCTION ACTIVE NOW!";
+                    label.style.color = "#ef4444";
+                    display.innerText = "Closes at 12:00 PM Sharp";
+                    display.style.color = "#4ade80";
+                    btn.classList.remove("waiting");
+                    btn.innerText = "Join Live Auction Arena 🚀";
+                    return;
+                }
+
+                // Scenario B: Calculate deadline marker offset targets relative to next Saturday 11:00 AM
+                let target = new Date();
+                target.setDate(now.getDate() + (6 - currentDay + (currentDay === 6 && currentHour >= 12 ? 7 : 0)) % 7);
