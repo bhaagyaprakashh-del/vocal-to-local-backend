@@ -75,6 +75,18 @@ class Business(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     registered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
+class Product(Base):
+    """Stores Sunday-Friday Daily Discovery Digital Catalog Items"""
+    __tablename__ = "products"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False)
+    product_name: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
+    description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    regular_price: Mapped[float] = mapped_column(Integer, nullable=False) # Stored in INR
+    is_available: Mapped[bool] = mapped_column(Boolean, default=True)
+    
+    business: Mapped["Business"] = relationship(back_populates="products")
 
 def get_db():
     db = SessionLocal()
