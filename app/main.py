@@ -30,7 +30,7 @@ class BusinessCreate(BaseModel):
     detailed_address: str
     area_id: int
 
-# ==================== SEPARATED STATIC LAYOUT SECTIONS ====================
+# ==================== STATIC TEMPLATE CONTENT ====================
 HTML_PART_1 = """<!DOCTYPE html>
 <html lang="en">
 <head>
