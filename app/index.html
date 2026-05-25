@@ -32,13 +32,15 @@
         .shop-category { display: inline-block; background: #e0e7ff; color: #4338ca; font-size: 0.75rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-bottom: 15px; text-transform: uppercase; }
         .shop-meta { font-size: 0.9rem; color: #64748b; margin-top: 8px; display: flex; align-items: center; gap: 5px; }
         .no-results { text-align: center; color: #64748b; font-size: 1.1rem; grid-column: 1/-1; padding: 4px 0; }
+        
+        /* Fixed and Formatted Popup Modals styling layout */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 35px; border-radius: 20px; width: 100%; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; }
         .close-modal { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; border: none; background: none; }
         .modal h3 { font-size: 1.4rem; margin-bottom: 20px; color: #0f172a; }
         .form-group { margin-bottom: 18px; text-align: left; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
-        .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; font-size: 0.95rem; }
+        .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; font-size: 0.95rem; color: #0f172a; }
         .form-group input:focus { border-color: #4f46e5; }
         .submit-btn { width: 100%; background: #4f46e5; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 1rem; margin-top: 10px; transition: 0.2s; }
         .submit-btn:hover { background: #4338ca; }
@@ -66,6 +68,8 @@
             <div class="no-results">Use the search box above to find local shops in your operational pin area.</div>
         </div>
     </main>
+
+    <!-- Buyer Enrollment Modal popup window container -->
     <div id="buyerModal" class="modal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeModal('buyerModal')">&times;</button>
@@ -78,6 +82,8 @@
             </form>
         </div>
     </div>
+
+    <!-- Seller Enrollment Modal popup window container -->
     <div id="sellerModal" class="modal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeModal('sellerModal')">&times;</button>
@@ -90,9 +96,11 @@
             </form>
         </div>
     </div>
+
     <script>
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
         async function submitForm(event, role) {
             event.preventDefault();
             const prefix = role === 'customer' ? 'b_' : 's_';
@@ -121,6 +129,7 @@
                 alert('Could not connect to registration server.');
             }
         }
+
         async function searchVendors() {
             const pincode = document.getElementById('pincodeInput').value.trim();
             const grid = document.getElementById('resultsGrid');
@@ -135,6 +144,3 @@
                     return;
                 }
                 data.results.forEach(shop => {
-                    grid.innerHTML += `<div class="shop-card"><div class="shop-name">${shop.shop_name}</div><span class="shop-category">${shop.category}</span><div class="shop-meta">📍 <b>Address:</b> ${shop.address}</div><div class="shop-meta">🏢 <b>Area:</b> ${shop.area} (${shop.pincode})</div></div>`;
-                });
-            } catch (error) {
