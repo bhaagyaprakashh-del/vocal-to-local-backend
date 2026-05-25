@@ -91,6 +91,7 @@
                 phone_number: document.getElementById('phone').value,
                 business_name: document.getElementById('biz_name').value,
                 category: document.getElementById('biz_category').value,
+                gst_number: document.getElementById('gst_number').value.trim().toUpperCase() || null, // 🆕 Maps dynamic GST inputs
                 detailed_address: fullAddressString,
                 area_name: document.getElementById('area').value,
                 pincode: document.getElementById('pincode').value,
