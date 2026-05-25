@@ -30,8 +30,8 @@ class BusinessCreate(BaseModel):
     detailed_address: str
     area_id: int
 
-# ==================== RAW HOME DESIGN LAYOUT ====================
-FRONTEND_HTML_MARKUP = """<!DOCTYPE html>
+# ==================== STATIC TEMPLATE CONTENT ====================
+HTML_START = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -122,8 +122,9 @@ FRONTEND_HTML_MARKUP = """<!DOCTYPE html>
                 <button type="submit" class="submit-btn">Enroll as Seller</button>
             </form>
         </div>
-    </div>
-    <script>
+    </div>"""
+
+HTML_END = """<script>
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         async function submitForm(event, role) {
