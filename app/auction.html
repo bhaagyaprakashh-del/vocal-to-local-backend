@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Saturday Sale | Live Price War</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body { background:#0f172a; color:#f8fafc; padding:40px; }
+        .live-badge { display:inline-block; background:#ef4444; color:white; padding:6px 12px; border-radius:20px; font-weight:700; font-size:0.8rem; animation: pulse 1.5s infinite; text-transform:uppercase; margin-bottom:15px; }
+        @keyframes pulse { 0% { opacity:1; } 50% { opacity:0.4; } 100% { opacity:1; } }
+        .container { max-width:900px; margin:0 auto; }
+        h2 { font-size:2rem; margin-bottom:5px; color:#38bdf8; }
+        .board { background:#1e293b; padding:25px; border-radius:16px; border:1px solid #334155; margin-top:20px; }
+        .feed-grid { display:grid; gap:15px; margin-top:20px; }
+        .auction-card { background:#334155; padding:20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; }
+        .price-tag { font-size:1.5rem; color:#4ade80; font-weight:700; }
+        .bid-btn { background:#10b981; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="live-badge">🔴 1-Hour Flash Window Active</span>
+        <h2>The Saturday Sale Reverse Auction</h2>
+        <p>Live peer-to-peer price war stream for local neighborhoods</p>
+        
+        <div class="board">
+            <h3>Active Reverse-Bidding Board</h3>
+            <div class="feed-grid" id="auctionFeed">
+                <!-- Live auction broadcast entries drop here via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Extract your operational target pin dynamically (Fallback example config setup)
+        const userPincode = "411057"; 
+        
+        // Connect to your Render Secure WebSockets Layer Protocol server environment
+        const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+        const socket = new WebSocket(`${wsProtocol}${window.location.host}/ws/auction/${userPincode}`);
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const feed = document.getElementById('auctionFeed');
+
+            // Handle Scenario A: A nearby user dropped a new shopping list cart element
+            if (data.event === "request_created") {
+                const card = document.createElement('div');
+                card.className = 'auction-card';
+                card.id = `auction-${data.auction_id}`;
+                card.innerHTML = `
+                    <div>
+                        <h4>📦 Shopping Cart Request #${data.auction_id}</h4>
+                        <p style="color:#cbd5e1; margin-top:4px;">Items: ${data.items}</p>
+                    </div>
+                    <div>
+                        <div class="price-tag" id="price-${data.auction_id}">₹${data.budget}</div>
+                        <button class="bid-btn" onclick="dropCounterBid(${data.auction_id}, ${data.budget - 20})">Under Cut ₹20</button>
+                    </div>
+                `;
+                feed.appendChild(card);
+            }
+
+            // Handle Scenario B: A store dropped a lower price offer string
+            if (data.event === "bid_received") {
+                const priceLabel = document.getElementById(`price-${data.auction_id}`);
+                if (priceLabel) {
+                    priceLabel.innerText = `₹${data.new_low_price}`;
+                    priceLabel.style.color = "#22c55e"; // Flashes green on drop
+                }
+            }
+        };
+
+        function dropCounterBid(auctionId, targetBidValue) {
+            // Emits down the open client wire instantly
+            socket.send(JSON.stringify({
+                "action": "place_bid",
+                "auction_id": auctionId,
+                "business_id": 1, // Dynamically extracted from vendor session cookie later
+                "bid_amount": targetBidValue,
+                "delivery_time": "20 Mins"
+            }));
+        }
+    </script>
+</body>
+</html>
