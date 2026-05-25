@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import engine, Base, get_db, Area, User, Business
 
-# Automatically maintain production tables structural modifications
-Base.metadata.create_all(bind=engine)
+# ✅ FIXED: Commented out to prevent the SQLAlchemy metadata conflict crash
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Vocal to Local API")
 
