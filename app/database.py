@@ -95,6 +95,35 @@ class Product(Base):
     
     business: Mapped["Business"] = relationship(back_populates="products")
 
+class AuctionRequest(Base):
+    """Stores the weekly shopping lists dropped by buyers for the Saturday auction"""
+    __tablename__ = "auction_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    buyer_id: Mapped[int] = mapped_column(Integer, index=True)
+    items_list: Mapped[str] = mapped_column(String(500), nullable=False) # e.g., "5kg Rice, 2L Oil"
+    target_pincode: Mapped[str] = mapped_column(String(10), index=True, nullable=False)
+    max_budget: Mapped[float] = mapped_column(Float, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="open") # open, closed, expired
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationship link to counter-bids
+    bids: Mapped[List["AuctionBid"]] = relationship(back_populates="auction", cascade="all, delete-orphan")
+
+
+class AuctionBid(Base):
+    """Stores real-time reverse-bids placed by local merchants to win orders"""
+    __tablename__ = "auction_bids"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    auction_id: Mapped[int] = mapped_column(ForeignKey("auction_requests.id"), nullable=False)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False)
+    bid_amount: Mapped[float] = mapped_column(Float, nullable=False) # The downward-competing offer
+    delivery_time: Mapped[str] = mapped_column(String(50), default="Immediate") 
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    auction: Mapped["AuctionRequest"] = relationship(back_populates="bids")
+
 
 def get_db():
     db = SessionLocal()
