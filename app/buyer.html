@@ -78,7 +78,7 @@
             };
 
             try {
-                const response = await fetch('/onboard-buyer/', {
+                const response = await fetch('/onboard-buyer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(complexPayload)
