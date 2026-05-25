@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, String, Integer, Boolean, DateTime, ForeignKey
+from sqlalchemy import create_engine, String, Integer, Float, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, Mapped, mapped_column, DeclarativeBase, relationship
 from datetime import datetime
 from typing import Optional, List
@@ -61,8 +61,9 @@ class Business(Base):
     owner_id: Mapped[int] = mapped_column(Integer, index=True) 
     business_name: Mapped[str] = mapped_column(String(150), nullable=False)
     category: Mapped[str] = mapped_column(String(50), index=True) 
-    detailed_address: Mapped[str] = mapped_column(String(255))
-     # 🆕 GST Identification Number (Optional for micro-vendors)
+    detailed_address: Mapped[str] = mapped_column(String(255), nullable=False)
+    
+    # GST Identification Number (Optional for micro-vendors)
     gst_number: Mapped[Optional[str]] = mapped_column(String(15), nullable=True, index=True)
     
     # Subscription status tracking for monetization management
@@ -72,8 +73,12 @@ class Business(Base):
     area_id: Mapped[int] = mapped_column(ForeignKey("areas.id"), nullable=False)
     area: Mapped["Area"] = relationship(back_populates="businesses")
     
+    # ✅ FIXED: Added relationship mapper back so main.py catalog tools work smoothly
+    products: Mapped[List["Product"]] = relationship(back_populates="business", cascade="all, delete-orphan")
+    
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     registered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
 
 class Product(Base):
     """Stores Sunday-Friday Daily Discovery Digital Catalog Items"""
@@ -83,10 +88,13 @@ class Product(Base):
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False)
     product_name: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
     description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    regular_price: Mapped[float] = mapped_column(Integer, nullable=False) # Stored in INR
+    
+    # ✅ FIXED: Adjusted from Integer to Float type to hold standard price formats
+    regular_price: Mapped[float] = mapped_column(Float, nullable=False) 
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)
     
     business: Mapped["Business"] = relationship(back_populates="products")
+
 
 def get_db():
     db = SessionLocal()
