@@ -38,6 +38,7 @@ class VendorOnboardPayload(BaseModel):
     phone_number: str
     business_name: str
     category: str
+    gst_number: Optional[str] = None  # 🆕 Track GST input
     detailed_address: str
     area_name: str
     pincode: str
@@ -51,6 +52,65 @@ class BuyerOnboardPayload(BaseModel):
     area_name: str
     pincode: str
     city: str
+class ProductCreatePayload(BaseModel):
+    business_id: int
+    product_name: str
+    description: Optional[str] = None
+    regular_price: float
+
+# ==================== UPDATED VENDOR ONBOARDING ROUTE ====================
+
+@app.post("/onboard-vendor/", status_code=status.HTTP_201_CREATED)
+def onboard_local_vendor_profile(payload: VendorOnboardPayload, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == payload.email).first():
+        raise HTTPException(status_code=400, detail="Owner Email is already registered")
+        
+    target_area = db.query(Area).filter(Area.pincode == payload.pincode).first()
+    if not target_area:
+        target_area = Area(area_name=payload.area_name, pincode=payload.pincode, city=payload.city)
+        db.add(target_area)
+        db.flush()
+        
+    new_user = User(
+        full_name=payload.full_name, email=payload.email, phone_number=payload.phone_number,
+        role="vendor", area_id=target_area.id
+    )
+    db.add(new_user)
+    db.flush()
+    
+    new_shop = Business(
+        owner_id=new_user.id, 
+        business_name=payload.business_name, 
+        category=payload.category,
+        detailed_address=payload.detailed_address, 
+        gst_number=payload.gst_number,  # 🆕 Save verified GST registration numbers
+        area_id=target_area.id
+    )
+    db.add(new_shop)
+    db.commit()
+    
+    return {"status": "success", "message": "Onboarding complete!", "business_id": new_shop.id}
+
+# ==================== DAILY DISCOVERY CATALOG ENDPOINTS ====================
+
+@app.post("/products/", status_code=status.HTTP_201_CREATED)
+def add_catalog_item(payload: ProductCreatePayload, db: Session = Depends(get_db)):
+    shop = db.query(Business).filter(Business.id == payload.business_id).first()
+    if not shop:
+        raise HTTPException(status_code=404, detail="Business profile not found")
+        
+    new_product = Product(
+        business_id=payload.business_id, product_name=payload.product_name,
+        description=payload.description, regular_price=payload.regular_price
+    )
+    db.add(new_product)
+    db.commit()
+    return {"status": "success", "message": "Product catalog item listed successfully"}
+
+@app.get("/catalog/{business_id}")
+def view_shop_digital_storefront(business_id: int, db: Session = Depends(get_db)):
+    products = db.query(Product).filter(Product.business_id == business_id, Product.is_available == True).all()
+    return products
 
 # ==================== CLEAN FRONTEND ROUTERS ====================
 
