@@ -1,53 +1,73 @@
 import os
-from sqlalchemy import create_engine, String, Integer, Boolean, DateTime
-from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, DeclarativeBase
+from sqlalchemy import create_engine, String, Integer, Boolean, DateTime, ForeignKey
+from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, DeclarativeBase, relationship
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-# 1. Fetch the Internal Database URL from Render Environment Settings
-# If running locally, it defaults to a local PostgreSQL layout
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/vocaltolocal")
 
-# Fix for Render/PostgreSQL connection strings using old 'postgres://' format
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# 2. Create Database Engine and Session Factory
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# 3. Create Modern Declarative Base for Tables
 class Base(DeclarativeBase):
     pass
 
-# ==================== DATABASE TABLES (MODELS) ====================
+# ==================== UPDATED DATABASE TABLES ====================
+
+class Area(Base):
+    """Stores operating areas/locations (e.g., specific neighborhoods or pincodes)"""
+    __tablename__ = "areas"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    area_name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    pincode: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
+    city: Mapped[str] = mapped_column(String(100), default="Mumbai")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # Relationships
+    users: Mapped[List["User"]] = relationship(back_populates="area")
+    businesses: Mapped[List["Business"]] = relationship(back_populates="area")
+
 
 class User(Base):
-    """Stores information about system users/customers"""
+    """Stores system users (Customers and Vendor Owners)"""
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(150), unique=True, index=True, nullable=False)
-    phone_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    phone_number: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
+    role: Mapped[str] = mapped_column(String(20), default="customer") # 'customer' or 'vendor'
+    
+    # Location linking
+    area_id: Mapped[Optional[int]] = mapped_column(ForeignKey("areas.id"), nullable=True)
+    area: Mapped[Optional["Area"]] = relationship(back_populates="users")
+    
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class Business(Base):
-    """Stores local vendors/shops registered under Vocal to Local"""
+    """Stores local vendors registered under an Area"""
     __tablename__ = "businesses"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    owner_id: Mapped[int] = mapped_column(Integer, index=True) # Connects to User.id later
+    owner_id: Mapped[int] = mapped_column(Integer, index=True) 
     business_name: Mapped[str] = mapped_column(String(150), nullable=False)
-    category: Mapped[str] = mapped_column(String(50), index=True) # e.g., Grocery, Dairy, Clothes
-    address: Mapped[str] = mapped_column(String(255))
+    category: Mapped[str] = mapped_column(String(50), index=True) 
+    detailed_address: Mapped[str] = mapped_column(String(255))
+    
+    # Location linking
+    area_id: Mapped[int] = mapped_column(ForeignKey("areas.id"), nullable=False)
+    area: Mapped["Area"] = relationship(back_populates="businesses")
+    
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     registered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
-# 4. Dependency function to easily yield database sessions to API routes
 def get_db():
     db = SessionLocal()
     try:
