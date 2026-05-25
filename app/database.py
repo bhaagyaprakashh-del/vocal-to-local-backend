@@ -1,6 +1,6 @@
 import os
 from sqlalchemy import create_engine, String, Integer, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, DeclarativeBase, relationship
+from sqlalchemy.orm import sessionmaker, Mapped, mapped_column, DeclarativeBase, relationship
 from datetime import datetime
 from typing import Optional, List
 
@@ -42,6 +42,9 @@ class User(Base):
     phone_number: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
     role: Mapped[str] = mapped_column(String(20), default="customer") # 'customer' or 'vendor'
     
+    # Matches buyer.html frontend payload address data strings
+    detailed_address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
     # Location linking
     area_id: Mapped[Optional[int]] = mapped_column(ForeignKey("areas.id"), nullable=True)
     area: Mapped[Optional["Area"]] = relationship(back_populates="users")
@@ -66,25 +69,6 @@ class Business(Base):
     
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     registered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
-class User(Base):
-    """Stores system users (Customers and Vendor Owners)"""
-    __tablename__ = "users"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[str] = mapped_column(String(150), unique=True, index=True, nullable=False)
-    phone_number: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
-    role: Mapped[str] = mapped_column(String(20), default="customer") 
-    
-    # 🆕 ADD THIS LINE BELOW TO MATCH BUYER.HTML PAYLOAD
-    detailed_address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-
-    area_id: Mapped[Optional[int]] = mapped_column(ForeignKey("areas.id"), nullable=True)
-    area: Mapped[Optional["Area"]] = relationship(back_populates="users")
-    
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 def get_db():
