@@ -163,6 +163,12 @@ def read_root():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(current_dir, "index.html"), "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read(), status_code=200)
+        
+@app.get("/saturday-sale", response_class=HTMLResponse)
+def read_saturday_auction_arena():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(current_dir, "auction.html"), "r", encoding="utf-8") as file:
+        return HTMLResponse(content=file.read(), status_code=200)
 
 @app.get("/enroll-buyer", response_class=HTMLResponse)
 def read_buyer_page():
