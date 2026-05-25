@@ -92,7 +92,7 @@
             };
 
             try {
-                const response = await fetch('/onboard-vendor/', {
+                const response = await fetch('/onboard-vendor', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(complexPayload)
