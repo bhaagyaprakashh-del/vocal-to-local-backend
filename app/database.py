@@ -62,6 +62,11 @@ class Business(Base):
     business_name: Mapped[str] = mapped_column(String(150), nullable=False)
     category: Mapped[str] = mapped_column(String(50), index=True) 
     detailed_address: Mapped[str] = mapped_column(String(255))
+     # 🆕 GST Identification Number (Optional for micro-vendors)
+    gst_number: Mapped[Optional[str]] = mapped_column(String(15), nullable=True, index=True)
+    
+    # Subscription status tracking for monetization management
+    is_premium: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # Location linking
     area_id: Mapped[int] = mapped_column(ForeignKey("areas.id"), nullable=False)
