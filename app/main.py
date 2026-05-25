@@ -31,13 +31,22 @@ class BusinessCreate(BaseModel):
     detailed_address: str
     area_id: int
 
-# Combined payload handling scheme mapping manual frontend details directly
+# Combined payload handling maps manual frontend details directly
 class VendorOnboardPayload(BaseModel):
     full_name: str
     email: EmailStr
     phone_number: str
     business_name: str
     category: str
+    detailed_address: str
+    area_name: str
+    pincode: str
+    city: str
+
+class BuyerOnboardPayload(BaseModel):
+    full_name: str
+    email: EmailStr
+    phone_number: str
     detailed_address: str
     area_name: str
     pincode: str
@@ -63,17 +72,15 @@ def read_seller_page():
     with open(os.path.join(current_dir, "seller.html"), "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read(), status_code=200)
 
-# ==================== UNIFIED COMBINED ONBOARDING ENDPOINT ====================
+# ==================== UNIFIED COMBINED ONBOARDING ENDPOINTS ====================
 
 @app.post("/onboard-vendor/", status_code=status.HTTP_201_CREATED)
 def onboard_local_vendor_profile(payload: VendorOnboardPayload, db: Session = Depends(get_db)):
-    # 1. Verification parameters check
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="Owner Email is already registered")
     if db.query(User).filter(User.phone_number == payload.phone_number).first():
         raise HTTPException(status_code=400, detail="Owner Phone Number is already registered")
         
-    # 2. Automatically create or reference Area pin specifications
     target_area = db.query(Area).filter(Area.pincode == payload.pincode).first()
     if not target_area:
         target_area = Area(area_name=payload.area_name, pincode=payload.pincode, city=payload.city)
@@ -81,7 +88,6 @@ def onboard_local_vendor_profile(payload: VendorOnboardPayload, db: Session = De
         db.commit()
         db.refresh(target_area)
         
-    # 3. Save User identity profile row
     new_user = User(
         full_name=payload.full_name, email=payload.email, phone_number=payload.phone_number,
         role="vendor", area_id=target_area.id
@@ -90,7 +96,6 @@ def onboard_local_vendor_profile(payload: VendorOnboardPayload, db: Session = De
     db.commit()
     db.refresh(new_user)
     
-    # 4. Bind information elements to launch physical storefront
     new_shop = Business(
         owner_id=new_user.id, business_name=payload.business_name, category=payload.category,
         detailed_address=payload.detailed_address, area_id=target_area.id
@@ -100,6 +105,31 @@ def onboard_local_vendor_profile(payload: VendorOnboardPayload, db: Session = De
     db.refresh(new_shop)
     
     return {"status": "success", "message": "Onboarding complete!", "business_id": new_shop.id}
+
+
+@app.post("/onboard-buyer/", status_code=status.HTTP_201_CREATED)
+def onboard_local_buyer_profile(payload: BuyerOnboardPayload, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == payload.email).first():
+        raise HTTPException(status_code=400, detail="Email is already registered")
+    if db.query(User).filter(User.phone_number == payload.phone_number).first():
+        raise HTTPException(status_code=400, detail="Phone Number is already registered")
+        
+    target_area = db.query(Area).filter(Area.pincode == payload.pincode).first()
+    if not target_area:
+        target_area = Area(area_name=payload.area_name, pincode=payload.pincode, city=payload.city)
+        db.add(target_area)
+        db.commit()
+        db.refresh(target_area)
+        
+    new_user = User(
+        full_name=payload.full_name, email=payload.email, phone_number=payload.phone_number,
+        role="customer", area_id=target_area.id
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    return {"status": "success", "message": "Buyer registration complete!", "user_id": new_user.id}
 
 # --- STANDARD ROUTE PATH RUNNERS ---
 
