@@ -7,16 +7,18 @@
     <link href="https://googleapis.com" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #f8fafc; color: #1e293b; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background: white; padding: 40px; border-radius: 20px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; text-align: center; }
+        body { background: #f8fafc; color: #1e293b; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px 20px; }
+        .card { background: white; padding: 40px; border-radius: 20px; width: 100%; max-width: 550px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; text-align: center; }
         h3 { font-size: 1.6rem; margin-bottom: 10px; color: #4f46e5; font-weight: 700; }
         p { color: #64748b; font-size: 0.9rem; margin-bottom: 30px; }
+        .section-divider { font-size: 1rem; font-weight: 700; color: #4f46e5; text-align: left; margin: 25px 0 15px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; font-size: 0.95rem; }
-        .form-group input:focus, .form-group select:focus { border-color: #4f46e5; }
-        .submit-btn { width: 100%; background: #4f46e5; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: 0.2s; }
-        .submit-btn:hover { background: #4338ca; }
+        .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; font-size: 0.95rem; }
+        .form-group input:focus { border-color: #4f46e5; }
+        .submit-btn { width: 100%; background: #4f46e5; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 1.05rem; transition: 0.2s; margin-top: 15px; }
+        .submit-btn:hover { background: #3730a3; }
         .back-link { display: inline-block; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 0.9rem; }
         .back-link:hover { color: #4f46e5; }
     </style>
@@ -24,73 +26,75 @@
 <body>
     <div class="card">
         <h3>Buyer Enrollment</h3>
-        <p>Register as a local customer to find nearby shops</p>
+        <p>Create your profile and save your home delivery address to find nearby shops</p>
+        
         <form id="buyerForm" onsubmit="submitForm(event)">
-            <div class="form-group"><label>Full Name</label><input type="text" id="name" required placeholder="John Doe"></div>
-            <div class="form-group"><label>Email Address</label><input type="email" id="email" required placeholder="john@example.com"></div>
-            <div class="form-group"><label>Phone Number</label><input type="text" id="phone" required placeholder="9876543210"></div>
-            
-            <!-- Added Area Dropdown Selection Box -->
-            <div class="form-group">
-                <label>Select Your Residential Area</label>
-                <select id="area_select" required>
-                    <option value="" disabled selected>Loading locations...</option>
-                </select>
+            <!-- 👤 Part 1: Personal Details -->
+            <div class="section-divider">👤 Personal Details</div>
+            <div class="form-group"><label>Full Name</label><input type="text" id="buyer_name" required placeholder="John Doe"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Email Address</label><input type="email" id="email" required placeholder="john@example.com"></div>
+                <div class="form-group"><label>Phone Number</label><input type="text" id="phone" required placeholder="9876543210"></div>
             </div>
 
-            <button type="submit" class="submit-btn">Register as Buyer</button>
+            <!-- 📍 Part 2: Residential Address Mapping -->
+            <div class="section-divider">📍 Delivery Address Details</div>
+            <div class="form-row">
+                <div class="form-group"><label>Flat / House No</label><input type="text" id="flat_no" required placeholder="Flat 402, Building A"></div>
+                <div class="form-group"><label>Floor</label><input type="text" id="floor" placeholder="4th Floor"></div>
+            </div>
+            <div class="form-group"><label>Street Address / Landmark</label><input type="text" id="street" required placeholder="Near Golden Temple, Main Road"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Area Name / Colony</label><input type="text" id="area" required placeholder="Hinjawadi"></div>
+                <div class="form-group"><label>Pincode</label><input type="text" id="pincode" required placeholder="411057" maxlength="6"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>City / Town</label><input type="text" id="city" required placeholder="Pune"></div>
+                <div class="form-group"><label>District</label><input type="text" id="district" required placeholder="Pune District"></div>
+            </div>
+            <div class="form-group"><label>State</label><input type="text" id="state" required placeholder="Maharashtra"></div>
+
+            <button type="submit" class="submit-btn">Register and Save Address</button>
         </form>
         <a href="/" class="back-link">← Back to Homepage</a>
     </div>
 
     <script>
-        async function fetchAvailableAreas() {
-            const dropdown = document.getElementById('area_select');
-            try {
-                const response = await fetch('/areas/');
-                const areas = await response.json();
-                dropdown.innerHTML = '';
-                if (areas.length === 0) {
-                    dropdown.innerHTML = '<option value="" disabled>No active areas configured yet.</option>';
-                    return;
-                }
-                dropdown.innerHTML = '<option value="" disabled selected>-- Choose your Area --</option>';
-                areas.forEach(area => {
-                    dropdown.innerHTML += `<option value="${area.id}">${area.area_name} (${area.pincode})</option>`;
-                });
-            } catch (error) {
-                dropdown.innerHTML = '<option value="" disabled>Error loading database areas.</option>';
-            }
-        }
-
         async function submitForm(event) {
             event.preventDefault();
-            const selectedAreaId = document.getElementById('area_select').value;
-            const payload = {
-                full_name: document.getElementById('name').value,
+            
+            // Build the collective structured address string for the backend layout
+            const floorInfo = document.getElementById('floor').value ? `${document.getElementById('floor').value}, ` : '';
+            const fullAddressString = `${document.getElementById('flat_no').value}, ${floorInfo}${document.getElementById('street').value}, ${document.getElementById('district').value}, ${document.getElementById('state').value}`;
+            
+            const complexPayload = {
+                full_name: document.getElementById('buyer_name').value,
                 email: document.getElementById('email').value,
                 phone_number: document.getElementById('phone').value,
-                role: 'customer',
-                area_id: selectedAreaId ? parseInt(selectedAreaId) : null
+                detailed_address: fullAddressString,
+                area_name: document.getElementById('area').value,
+                pincode: document.getElementById('pincode').value,
+                city: document.getElementById('city').value
             };
+
             try {
-                const response = await fetch('/users/', {
+                const response = await fetch('/onboard-buyer/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(complexPayload)
                 });
                 const data = await response.json();
+                
                 if (response.ok) {
-                    alert('Registration Successful!');
+                    alert('Registration Successful! Your delivery address profile is live.');
                     window.location.href = '/';
                 } else {
-                    alert('Error: ' + data.detail);
+                    alert('Registration Failed: ' + data.detail);
                 }
             } catch (error) {
-                alert('Could not connect to registration server.');
+                alert('Could not connect to the buyer deployment server.');
             }
         }
-        fetchAvailableAreas();
     </script>
 </body>
 </html>
