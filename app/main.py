@@ -113,3 +113,22 @@ def search_marketplace_vendors(pincode: Optional[str] = None, category: Optional
             "area": b.area.area_name, "pincode": b.area.pincode, "verified": b.is_verified
         } for b in results]
     }
+# ==================== CLEAN FRONTEND ROUTERS ====================
+
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(current_dir, "index.html"), "r", encoding="utf-8") as file:
+        return HTMLResponse(content=file.read(), status_code=200)
+
+@app.get("/enroll-buyer", response_class=HTMLResponse)
+def read_buyer_page():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(current_dir, "buyer.html"), "r", encoding="utf-8") as file:
+        return HTMLResponse(content=file.read(), status_code=200)
+
+@app.get("/enroll-seller", response_class=HTMLResponse)
+def read_seller_page():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(current_dir, "seller.html"), "r", encoding="utf-8") as file:
+        return HTMLResponse(content=file.read(), status_code=200)
