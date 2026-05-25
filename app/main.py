@@ -157,5 +157,4 @@ HTML_PART_2 = """<script>
         }
         async function searchVendors() {
             const pincode = document.getElementById('pincodeInput').value.trim();
-            const grid = document.getElementById('resultsGrid');
-
+            const grid = document.getElementById('resultsGrid'); }
