@@ -7,6 +7,12 @@ from app.database import engine, Base, get_db, Area, User, Business
 
 # Sync models to database schema
 Base.metadata.create_all(bind=engine)
+# Temporary clean command to clear old structural conflicts
+Base.metadata.drop_all(bind=engine)
+
+# Sync models to database schema
+Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI(title="Vocal to Local API")
 
