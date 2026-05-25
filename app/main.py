@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import engine, Base, get_db, Area, User, Business
 
-# Sync models to database schema
+# Sync database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Vocal to Local API")
@@ -30,8 +30,8 @@ class BusinessCreate(BaseModel):
     detailed_address: str
     area_id: int
 
-# ==================== STATIC TEMPLATE CONTENT ====================
-HTML_START = """<!DOCTYPE html>
+# ==================== SEPARATED STATIC LAYOUT SECTIONS ====================
+HTML_PART_1 = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -124,7 +124,7 @@ HTML_START = """<!DOCTYPE html>
         </div>
     </div>"""
 
-HTML_END = """<script>
+HTML_PART_2 = """<script>
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         async function submitForm(event, role) {
