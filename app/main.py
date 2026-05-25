@@ -61,6 +61,101 @@ class ProductCreatePayload(BaseModel):
     description: Optional[str] = None
     regular_price: float
 
+from fastapi import WebSocket, WebSocketDisconnect
+import json
+
+# Import your new database components cleanly
+from app.database import AuctionRequest, AuctionBid
+
+# ==================== WEB_SOCKET AUCTION ENGINE ====================
+
+class HyperLocalAuctionManager:
+    """Manages active live broadcast connections grouped exclusively by local Pincodes"""
+    def __init__(self):
+        # Dictionary format: { "411057": [WebSocket1, WebSocket2], "411033": [] }
+        self.active_connections: dict[str, List[WebSocket]] = {}
+
+    async def connect(self, websocket: WebSocket, pincode: str):
+        await websocket.accept()
+        if pincode not in self.active_connections:
+            self.active_connections[pincode] = []
+        self.active_connections[pincode].append(websocket)
+
+    def disconnect(self, websocket: WebSocket, pincode: str):
+        if pincode in self.active_connections:
+            self.active_connections[pincode].remove(websocket)
+
+    async def broadcast_to_pincode(self, pincode: str, message: dict):
+        """Sends updates strictly to buyers and sellers operating inside the same circle radius"""
+        if pincode in self.active_connections:
+            for connection in self.active_connections[pincode]:
+                try:
+                    await connection.send_text(json.dumps(message))
+                except Exception:
+                    # Clear dead references if a browser tab closed abruptly
+                    self.active_connections[pincode].remove(connection)
+
+auction_manager = HyperLocalAuctionManager()
+
+# ==================== BROADCAST ENDPOINT ROUTE ====================
+
+@websocket_route := app.websocket("/ws/auction/{pincode}")
+async def live_auction_stream(websocket: WebSocket, pincode: str):
+    await auction_manager.connect(websocket, pincode)
+    db: Session = next(get_db()) # Initialize a dedicated stream session instance
+    
+    try:
+        while True:
+            # Continuously monitor live traffic coming down the wire channel stream
+            raw_data = await websocket.receive_text()
+            data = json.loads(raw_data)
+            
+            # Action A: Buyer broadcasts a brand new shopping list request live
+            if data.get("action") == "new_request":
+                new_request = AuctionRequest(
+                    buyer_id=data["buyer_id"],
+                    items_list=data["items_list"],
+                    target_pincode=pincode,
+                    max_budget=float(data["max_budget"])
+                )
+                db.add(new_request)
+                db.commit()
+                db.refresh(new_request)
+                
+                # Instantly alert all merchants inside the pin zone radius card
+                await auction_manager.broadcast_to_pincode(pincode, {
+                    "event": "request_created",
+                    "auction_id": new_request.id,
+                    "items": new_request.items_list,
+                    "budget": new_request.max_budget
+                })
+
+            # Action B: Merchant drops a lower counter-bid price to beat corporate competition
+            elif data.get("action") == "place_bid":
+                new_bid = AuctionBid(
+                    auction_id=int(data["auction_id"]),
+                    business_id=int(data["business_id"]),
+                    bid_amount=float(data["bid_amount"]),
+                    delivery_time=data.get("delivery_time", "30 Mins")
+                )
+                db.add(new_bid)
+                db.commit()
+                
+                # Instantly sync both buyer and cross-competing store feeds in real-time
+                await auction_manager.broadcast_to_pincode(pincode, {
+                    "event": "bid_received",
+                    "auction_id": new_bid.auction_id,
+                    "business_id": new_bid.business_id,
+                    "new_low_price": new_bid.bid_amount,
+                    "delivery": new_bid.delivery_time
+                })
+                
+    except WebSocketDisconnect:
+        auction_manager.disconnect(websocket, pincode)
+    finally:
+        db.close()
+
+
 # ==================== CLEAN FRONTEND ROUTERS ====================
 
 @app.get("/", response_class=HTMLResponse)
