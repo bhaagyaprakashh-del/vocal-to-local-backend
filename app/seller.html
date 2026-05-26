@@ -100,11 +100,13 @@
                 const lon = position.coords.longitude;
 
                 try {
-                    const response = await fetch(`https://openstreetmap.org{lat}&lon=${lon}&format=json&addressdetails=1`);
-                    const data = await response.json();
-
-                    if (data && data.address) {
-                        const addr = data.address;
+            // ✅ UPDATED: Includes an identification header matching OpenStreetMap standards
+            const response = await fetch(`https://openstreetmap.org{lat}&lon=${lon}&format=json&addressdetails=1`, {
+                headers: {
+                    'User-Agent': 'VocalToLocalMarketplace/1.0 (contact: support@vocaltolocal.co.in)'
+                }
+            });
+            const data = await response.json();
 
                         // Smart Address Hierarchy Mapping logic for regional Indian parameters
                         const subLocality = addr.suburb || addr.neighbourhood || addr.village || addr.commercial || "";
