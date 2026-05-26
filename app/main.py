@@ -158,6 +158,13 @@ async def live_auction_stream(websocket: WebSocket, pincode: str):
 
 # ==================== CLEAN FRONTEND ROUTERS ====================
 
+@app.get("/catalog", response_class=HTMLResponse)
+def read_catalog_dashboard_page():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.abspath(os.path.join(current_dir, ".."))
+    with open(os.path.join(root_dir, "catalog.html"), "r", encoding="utf-8") as file:
+        return HTMLResponse(content=file.read(), status_code=200)
+
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     current_dir = os.path.dirname(os.path.abspath(__file__))
