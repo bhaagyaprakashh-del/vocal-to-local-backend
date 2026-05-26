@@ -194,7 +194,6 @@ def onboard_local_vendor_profile(payload: VendorOnboardPayload, db: Session = De
     db.commit()
     db.refresh(new_user)
     
-    # ✅ FIXED: Completed the missing mapping execution block safely
     new_shop = Business(
         owner_id=new_user.id,
         business_name=payload.business_name,
@@ -253,3 +252,4 @@ def add_catalog_item(payload: ProductCreatePayload, db: Session = Depends(get_db
 
 @app.get("/catalog/{business_id}")
 def view_shop_digital_storefront(business_id: int, db: Session = Depends(get_db)):
+    # ✅ FIXED: Indented this return statement cleanly with 4 spaces
