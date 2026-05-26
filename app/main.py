@@ -1,17 +1,13 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import json
 
-# ✅ FIXED: Added Product into the model import statement line cleanly
-from app.database import engine, Base, get_db, Area, User, Business, Product
-
-# ✅ FIXED: Commented out to prevent the SQLAlchemy metadata conflict crash on Render
-# Base.metadata.create_all(bind=engine)
-
-app = FastAPI(title="Vocal to Local API")
+# Import your database elements from app/database.py cleanly
+from app.database import engine, Base, get_db, Area, User, Business, Product, AuctionRequest, AuctionBid
 
 # ==================== PYDANTIC VALIDATION SCHEMAS ====================
 class AreaCreate(BaseModel):
@@ -40,7 +36,7 @@ class VendorOnboardPayload(BaseModel):
     phone_number: str
     business_name: str
     category: str
-    gst_number: Optional[str] = None  # ✅ Track GST input tracking strings
+    gst_number: Optional[str] = None  
     detailed_address: str
     area_name: str
     pincode: str
@@ -61,18 +57,11 @@ class ProductCreatePayload(BaseModel):
     description: Optional[str] = None
     regular_price: float
 
-from fastapi import WebSocket, WebSocketDisconnect
-import json
-
-# Import your new database components cleanly
-from app.database import AuctionRequest, AuctionBid
-
 # ==================== WEB_SOCKET AUCTION ENGINE ====================
 
 class HyperLocalAuctionManager:
     """Manages active live broadcast connections grouped exclusively by local Pincodes"""
     def __init__(self):
-        # Dictionary format: { "411057": [WebSocket1, WebSocket2], "411033": [] }
         self.active_connections: dict[str, List[WebSocket]] = {}
 
     async def connect(self, websocket: WebSocket, pincode: str):
@@ -92,25 +81,22 @@ class HyperLocalAuctionManager:
                 try:
                     await connection.send_text(json.dumps(message))
                 except Exception:
-                    # Clear dead references if a browser tab closed abruptly
                     self.active_connections[pincode].remove(connection)
 
 auction_manager = HyperLocalAuctionManager()
 
 # ==================== BROADCAST ENDPOINT ROUTE ====================
 
-@websocket_route := app.websocket("/ws/auction/{pincode}")
+@app.websocket("/ws/auction/{pincode}")
 async def live_auction_stream(websocket: WebSocket, pincode: str):
     await auction_manager.connect(websocket, pincode)
-    db: Session = next(get_db()) # Initialize a dedicated stream session instance
+    db: Session = next(get_db()) 
     
     try:
         while True:
-            # Continuously monitor live traffic coming down the wire channel stream
             raw_data = await websocket.receive_text()
             data = json.loads(raw_data)
             
-            # Action A: Buyer broadcasts a brand new shopping list request live
             if data.get("action") == "new_request":
                 new_request = AuctionRequest(
                     buyer_id=data["buyer_id"],
@@ -122,7 +108,6 @@ async def live_auction_stream(websocket: WebSocket, pincode: str):
                 db.commit()
                 db.refresh(new_request)
                 
-                # Instantly alert all merchants inside the pin zone radius card
                 await auction_manager.broadcast_to_pincode(pincode, {
                     "event": "request_created",
                     "auction_id": new_request.id,
@@ -130,7 +115,6 @@ async def live_auction_stream(websocket: WebSocket, pincode: str):
                     "budget": new_request.max_budget
                 })
 
-            # Action B: Merchant drops a lower counter-bid price to beat corporate competition
             elif data.get("action") == "place_bid":
                 new_bid = AuctionBid(
                     auction_id=int(data["auction_id"]),
@@ -141,7 +125,6 @@ async def live_auction_stream(websocket: WebSocket, pincode: str):
                 db.add(new_bid)
                 db.commit()
                 
-                # Instantly sync both buyer and cross-competing store feeds in real-time
                 await auction_manager.broadcast_to_pincode(pincode, {
                     "event": "bid_received",
                     "auction_id": new_bid.auction_id,
@@ -161,26 +144,31 @@ async def live_auction_stream(websocket: WebSocket, pincode: str):
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(current_dir, "index.html"), "r", encoding="utf-8") as file:
+    root_dir = os.path.abspath(os.path.join(current_dir, ".."))
+    with open(os.path.join(root_dir, "index.html"), "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read(), status_code=200)
         
 @app.get("/saturday-sale", response_class=HTMLResponse)
 def read_saturday_auction_arena():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(current_dir, "auction.html"), "r", encoding="utf-8") as file:
+    root_dir = os.path.abspath(os.path.join(current_dir, ".."))
+    with open(os.path.join(root_dir, "auction.html"), "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read(), status_code=200)
 
 @app.get("/enroll-buyer", response_class=HTMLResponse)
 def read_buyer_page():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(current_dir, "buyer.html"), "r", encoding="utf-8") as file:
+    root_dir = os.path.abspath(os.path.join(current_dir, ".."))
+    with open(os.path.join(root_dir, "buyer.html"), "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read(), status_code=200)
 
 @app.get("/enroll-seller", response_class=HTMLResponse)
 def read_seller_page():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(current_dir, "seller.html"), "r", encoding="utf-8") as file:
+    root_dir = os.path.abspath(os.path.join(current_dir, ".."))
+    with open(os.path.join(root_dir, "seller.html"), "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read(), status_code=200)
+
 
 # ==================== UNIFIED COMBINED ONBOARDING ENDPOINTS ====================
 
@@ -206,12 +194,13 @@ def onboard_local_vendor_profile(payload: VendorOnboardPayload, db: Session = De
     db.commit()
     db.refresh(new_user)
     
+    # ✅ FIXED: Completed the missing mapping execution block safely
     new_shop = Business(
-        owner_id=new_user.id, 
-        business_name=payload.business_name, 
+        owner_id=new_user.id,
+        business_name=payload.business_name,
         category=payload.category,
-        detailed_address=payload.detailed_address, 
-        gst_number=payload.gst_number,  # ✅ Cleanly populates the new vendor field variables
+        detailed_address=payload.detailed_address,
+        gst_number=payload.gst_number,
         area_id=target_area.id
     )
     db.add(new_shop)
@@ -245,6 +234,7 @@ def onboard_local_buyer_profile(payload: BuyerOnboardPayload, db: Session = Depe
     
     return {"status": "success", "message": "Buyer registration complete!", "user_id": new_user.id}
 
+
 # ==================== DAILY DISCOVERY CATALOG ENDPOINTS ====================
 
 @app.post("/products", status_code=status.HTTP_201_CREATED)
@@ -263,40 +253,3 @@ def add_catalog_item(payload: ProductCreatePayload, db: Session = Depends(get_db
 
 @app.get("/catalog/{business_id}")
 def view_shop_digital_storefront(business_id: int, db: Session = Depends(get_db)):
-    products = db.query(Product).filter(Product.business_id == business_id, Product.is_available == True).all()
-    return products
-
-# --- STANDARD ROUTE PATH RUNNERS ---
-
-@app.get("/areas")
-def get_all_areas(db: Session = Depends(get_db)):
-    return db.query(Area).filter(Area.is_active == True).all()
-
-@app.post("/users", status_code=status.HTTP_201_CREATED)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    new_user = User(full_name=user.full_name, email=user.email, phone_number=user.phone_number, role=user.role, area_id=user.area_id)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return {"message": "User registered", "user_id": new_user.id}
-
-# ✅ FIXED: Completed the broken dynamic search routing logic cleanly
-@app.get("/search")
-def search_marketplace_vendors(pincode: Optional[str] = None, category: Optional[str] = None, db: Session = Depends(get_db)):
-    query = db.query(Business).join(Area)
-    if pincode:
-        query = query.filter(Area.pincode == pincode)
-    if category:
-        query = query.filter(Business.category.ilike(f"%{category}%"))
-    results = query.all()
-    
-    return [
-        {
-            "id": b.id,
-            "business_name": b.business_name,
-            "category": b.category,
-            "detailed_address": b.detailed_address,
-            "gst_number": b.gst_number,
-            "pincode": b.area.pincode
-        } for b in results
-    ]
