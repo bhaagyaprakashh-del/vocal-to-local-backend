@@ -108,6 +108,7 @@
                     return;
                 }
                 
+                // ✅ FIXED: Cleanly written structural loop to inject dynamic card fields
                 shops.forEach(shop => {
                     const card = document.createElement('div');
                     card.className = 'shop-card';
@@ -149,4 +150,3 @@
 
                 // Scenario B: Calculate deadline marker offset targets relative to next Saturday 11:00 AM
                 let target = new Date();
-                target.setDate(now.getDate() + (6 - currentDay + (currentDay === 6 && currentHour >= 12 ? 7 : 0)) % 7);
