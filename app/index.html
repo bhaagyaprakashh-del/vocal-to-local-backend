@@ -85,28 +85,60 @@
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         
-        // 🔍 Search Function: Queries your backend API by Pincode
+                // 🔍 Search Function: Queries your backend API with validation
         async function searchVendors() {
-            const pincode = document.getElementById('pincodeInput').value.trim();
+            const pincodeInput = document.getElementById('pincodeInput').value.trim();
             const grid = document.getElementById('resultsGrid');
             
-            if (!pincode) {
-                alert('Please enter a valid pincode.');
+            // 🚨 FRONTEND VALIDATION: Ensures users type numbers instead of city names
+            if (!pincodeInput) {
+                alert('Please enter a location pincode.');
                 return;
             }
             
-            grid.innerHTML = '<div class="no-results">Searching for local shops...</div>';
+            if (isNaN(pincodeInput) || pincodeInput.length < 6) {
+                grid.innerHTML = `
+                    <div class="no-results" style="color: #ef4444;">
+                        ⚠️ Invalid Pincode! Please enter your 6-digit area pincode number (e.g., 411057) to find matching neighborhood stores.
+                    </div>`;
+                return;
+            }
+            
+            grid.innerHTML = '<div class="no-results">Searching for nearby local shops...</div>';
             
             try {
-                const response = await fetch(`/search?pincode=${pincode}`);
+                const response = await fetch(`/search?pincode=${pincodeInput}`);
                 const shops = await response.json();
                 
                 grid.innerHTML = '';
                 
                 if (!response.ok || shops.length === 0) {
-                    grid.innerHTML = '<div class="no-results">❌ No registered vendors found in this area yet.</div>';
+                    grid.innerHTML = `
+                        <div class="no-results">
+                            ❌ No registered local vendors found in pincode <strong>${pincodeInput}</strong> yet. <br>
+                            <span style="font-size: 0.9rem; color: #64748b;">Be the first to onboard a vendor in this area!</span>
+                        </div>`;
                     return;
                 }
+                
+                // Injecting dynamic shop cards seamlessly
+                shops.forEach(shop => {
+                    const card = document.createElement('div');
+                    card.className = 'shop-card';
+                    card.innerHTML = `
+                        <div class="shop-name">${shop.business_name}</div>
+                        <span class="shop-category">${shop.category}</span>
+                        <div class="shop-meta">📍 ${shop.detailed_address}</div>
+                        \${shop.gst_number ? `<div class="shop-meta" style="font-size:0.85rem; color:#10b981; font-weight:600;">📄 GSTIN: \${shop.gst_number}</div>` : ''}
+                    `;
+                    grid.appendChild(card);
+                });
+                
+            } catch (error) {
+                grid.innerHTML = '<div class="no-results">⚠️ Error connecting to server. Please try again.</div>';
+            }
+        }
+
                 
                 // ✅ FIXED: Cleanly written structural loop to inject dynamic card fields
                 shops.forEach(shop => {
