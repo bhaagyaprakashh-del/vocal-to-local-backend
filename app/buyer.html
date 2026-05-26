@@ -68,6 +68,65 @@
     </div>
 
     <script>
+        // 🕒 GPS Real-Time Address Resolver Engine
+function detectGPSLocation() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser software.");
+        return;
+    }
+
+    alert("Fetching your precise location coordinates. Please allow location permissions if prompted...");
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        try {
+            // Uses OpenStreetMap's Reverse Geocoding to get detailed administrative boundaries
+            const response = await fetch(`https://openstreetmap.org{lat}&lon=${lon}&format=json&addressdetails=1`);
+            const data = await response.json();
+
+            if (data && data.address) {
+                const addr = data.address;
+
+                // 🧠 Smart Address Hierarchy Mapping logic for India boundaries
+                const subLocality = addr.suburb || addr.neighbourhood || addr.village || "";
+                const taluka = addr.subdistrict || "Mulshi"; // Defaults to Mulshi if mapping Marunji/Hinjawadi borders
+                const city = addr.city || addr.town || addr.clump || "Pune";
+                const district = addr.county || addr.district || "Pune District";
+                const state = addr.state || "Maharashtra";
+                const pincode = addr.postcode || "";
+
+                // Automatically update the input fields on your form
+                if (document.getElementById('street')) {
+                    document.getElementById('street').value = data.display_name.split(',').slice(0, 3).join(',');
+                }
+                if (document.getElementById('area')) {
+                    document.getElementById('area').value = `${subLocality} (Taluka: ${taluka})`.trim();
+                }
+                if (document.getElementById('pincode')) {
+                    document.getElementById('pincode').value = pincode;
+                }
+                if (document.getElementById('city')) {
+                    document.getElementById('city').value = city;
+                }
+                if (document.getElementById('district')) {
+                    document.getElementById('district').value = district;
+                }
+                if (document.getElementById('state')) {
+                    document.getElementById('state').value = state;
+                }
+
+                alert("Location details successfully resolved and filled!");
+            }
+        } catch (error) {
+            alert("Unable to fetch address string details from the mapping service.");
+        }
+    }, (error) => {
+        alert("GPS location request denied or timed out. Please input details manually.");
+    }, { enableHighAccuracy: true });
+}
+
         async function submitForm(event) {
             event.preventDefault();
             
